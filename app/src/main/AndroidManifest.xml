@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- improve this line later : -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.WomenSafetyApp">
+<!--        <activity-->
+<!--            android:name=".ProfileScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_profile_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".CrowdNetworkScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_crowd_network_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".SOSSentScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_sossent_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".QuickToolsScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_quick_tools_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".SafeRouteScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_safe_route_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".EmergencyContactScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_emergency_contact_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".SOSScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_sosscreen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+<!--        <activity-->
+<!--            android:name=".HomeScreen"-->
+<!--            android:exported="false"-->
+<!--            android:label="@string/title_activity_home_screen"-->
+<!--            android:theme="@style/Theme.WomenSafetyApp" />-->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.WomenSafetyApp">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

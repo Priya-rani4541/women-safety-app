@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Women Safety App</string>
+    <string name="title_activity_main_screen">MainScreen</string>
+    <string name="title_activity_fake_call">FakeCallActivity</string>
+    <string name="title_activity_register_screen">RegisterScreen</string>
+    <string name="title_activity_home_screen">HomeScreen</string>
+    <string name="title_activity_sosscreen">SOSScreen</string>
+    <string name="title_activity_emergency_contact_screen">EmergencyContactScreen</string>
+    <string name="title_activity_safe_route_screen">SafeRouteScreen</string>
+    <string name="title_activity_quick_tools_screen">QuickToolsScreen</string>
+    <string name="title_activity_sossent_screen">SOSSentScreen</string>
+    <string name="title_activity_crowd_network_screen">CrowdNetworkScreen</string>
+    <string name="title_activity_profile_screen">ProfileScreen</string>
+</resources>
