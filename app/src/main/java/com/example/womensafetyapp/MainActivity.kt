@@ -4,11 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
+import com.example.womensafetyapp.ui.theme.WomenSafetyAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { SheShieldApp() }
+        setContent {
+            WomenSafetyAppTheme {
+                SheShieldApp()
+            }
+        }
     }
 }
 
@@ -21,7 +26,6 @@ enum class Screen {
     SOS_SENT,
     EMERGENCY_CONTACTS,
     SAFE_ROUTE,
-    QUICK_TOOLS,
     CROWD_NETWORK,
     PROFILE
 }
@@ -44,35 +48,42 @@ fun SheShieldApp() {
         )
         Screen.HOME -> HomeScreen(
             onSOSTriggered = { current = Screen.SOS },
-            onNavigate = { label ->
-                when (label) {
-                    "Network"     -> current = Screen.CROWD_NETWORK
-                    "Safe Route"  -> current = Screen.SAFE_ROUTE
-                    "Quick Tools" -> current = Screen.QUICK_TOOLS
-                    "Contacts"    -> current = Screen.EMERGENCY_CONTACTS
-                }
+//            onNavigate = { label ->
+//                when (label) {
+//                    "Network"     -> current = Screen.CROWD_NETWORK
+//                    "Safe Route"  -> current = Screen.SAFE_ROUTE
+//                    "Quick Tools" -> current = Screen.QUICK_TOOLS
+//                    "Contacts"    -> current = Screen.EMERGENCY_CONTACTS
+//                }
+//            }
+            onNavigate = { screen ->
+                current = screen
             }
+
         )
         Screen.SOS -> SOSScreen(
             onCancel   = { current = Screen.HOME },
             onAlertSent = { current = Screen.SOS_SENT }
         )
         Screen.SOS_SENT -> SOSSentScreen(
-            onCancelAlert = { current = Screen.HOME }
+            onCancelAlert = { current = Screen.SOS }
         )
         Screen.EMERGENCY_CONTACTS -> EmergencyContactsScreen(
             onBack = { current = Screen.HOME }
         )
+
         Screen.SAFE_ROUTE -> SafeRouteScreen(
             onBack = { current = Screen.HOME }
         )
-        Screen.QUICK_TOOLS -> QuickToolsScreen(
-            onBack = { current = Screen.HOME }
-        )
-        Screen.CROWD_NETWORK -> CrowdNetworkScreen(
+
+//        Screen.QUICK_TOOLS -> QuickToolsScreen(
 //            onBack = { current = Screen.HOME }
+//        )
+
+        Screen.CROWD_NETWORK -> CrowdNetworkScreen(
             onNavigate = { current = Screen.HOME }
         )
+
         Screen.PROFILE -> ProfileScreen(
             onBack = { current = Screen.HOME }
         )

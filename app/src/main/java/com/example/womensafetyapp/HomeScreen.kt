@@ -1,5 +1,11 @@
 package com.example.womensafetyapp
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.hardware.camera2.CameraManager
+import android.net.Uri
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -13,12 +19,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
+import android.Manifest
+import androidx.compose.ui.platform.LocalConfiguration
+
 
 // ─── Colors ────────────────────────────────────────────────────────────────────
 private val HomeBg        = Color(0xFF1A0A3B)
@@ -42,8 +54,9 @@ data class QuickItem(val emoji: String, val label: String)
 @Composable
 fun HomeScreen(
     onSOSTriggered: () -> Unit = {},
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (Screen) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val quickItems = listOf(
         QuickItem("🗺️", "Safe Route"),
         QuickItem("📍", "Live Track"),
@@ -76,6 +89,13 @@ fun HomeScreen(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "sosScale"
     )
+    var isFlashOn by remember { mutableStateOf(false) }
+    // toggle flash light
+
+    val activity = context as? Activity
+
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     Scaffold(
         bottomBar = {
@@ -91,7 +111,15 @@ fun HomeScreen(
                 ).forEach { (emoji, label) ->
                     NavigationBarItem(
                         selected = selectedNav == label,
-                        onClick  = { selectedNav = label; onNavigate(label) },
+                        onClick = {
+                            selectedNav = label
+                            when (label) {
+                                "Home" -> onNavigate(Screen.HOME)
+                                "Route" -> onNavigate(Screen.SAFE_ROUTE)
+                                "Network" -> onNavigate(Screen.CROWD_NETWORK)
+                                "Profile" -> onNavigate(Screen.PROFILE)
+                            }
+                        },
                         icon = {
                             Text(emoji, fontSize = 20.sp)
                         },
@@ -128,7 +156,7 @@ fun HomeScreen(
                             listOf(Color(0xFF3D1080), HomeBg)
                         )
                     )
-                    .padding(start = 22.dp, end = 22.dp, top = 48.dp, bottom = 24.dp)
+                    .padding(start = 22.dp, end = 22.dp, top = 40.dp, bottom = 24.dp)
             ) {
                 Column {
                     Text(
@@ -142,7 +170,7 @@ fun HomeScreen(
                         Text(
                             "Stay safe, Riya ",
                             color = WhiteHome,
-                            fontSize = 24.sp,
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text("🛡️", fontSize = 22.sp)
@@ -193,7 +221,7 @@ fun HomeScreen(
                     // Pulsing rings + SOS button
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(200.dp)
+                        modifier = Modifier.size(screenWidth * 0.6f)
                     ) {
                         // Outer ring
                         Box(
@@ -212,7 +240,7 @@ fun HomeScreen(
                         // SOS Button
                         Box(
                             modifier = Modifier
-                                .size(110.dp)
+                                .size(screenWidth * 0.32f)
                                 .scale(sosScale)
                                 .clip(CircleShape)
                                 .background(SOSRed)
@@ -269,15 +297,78 @@ fun HomeScreen(
                 Spacer(Modifier.height(12.dp))
 
                 // 2-column grid
-                quickItems.chunked(3).forEach { rowItems ->
+                quickItems.chunked(2).forEach { rowItems ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         rowItems.forEach { item ->
+
                             QuickAccessCard(
                                 item = item,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                onClick = { item ->
+                                    when (item.label) {
+
+                                        "Safe Route" -> onNavigate(Screen.SAFE_ROUTE)
+
+                                        "Live Track" -> {
+                                            // TODO: start live tracking (location sharing)
+                                        }
+
+                                        "Network" -> onNavigate(Screen.CROWD_NETWORK)
+
+                                        "Flashlight" -> {
+//                                            val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+//                                            val cameraId = cameraManager.cameraIdList[0]
+//
+//                                            isFlashOn = !isFlashOn
+//                                            cameraManager.setTorchMode(cameraId, isFlashOn)
+                                            val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+                                            try {
+                                                val cameraId = cameraManager.cameraIdList.firstOrNull {
+                                                    cameraManager.getCameraCharacteristics(it)
+                                                        .get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
+                                                }
+
+                                                cameraId?.let {
+                                                    isFlashOn = !isFlashOn
+                                                    cameraManager.setTorchMode(it, isFlashOn)
+                                                }
+
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            }
+                                        }
+
+                                        "Helpline" -> {
+                                            val intent = Intent(Intent.ACTION_CALL).apply {
+                                                data = Uri.parse("tel:112") // or 100
+                                            }
+
+                                            if (ContextCompat.checkSelfPermission(
+                                                    context,
+                                                    Manifest.permission.CALL_PHONE
+                                                ) == PackageManager.PERMISSION_GRANTED
+                                            ) {
+                                                context.startActivity(intent)
+                                            } else {
+                                                activity?.let {
+                                                    ActivityCompat.requestPermissions(
+                                                        it,
+                                                        arrayOf(Manifest.permission.CALL_PHONE),
+                                                        1
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        "Record" -> {
+                                            // TODO: start audio/video recording
+                                        }
+                                    }
+                                }
                             )
                         }
                     }
@@ -291,20 +382,24 @@ fun HomeScreen(
 }
 
 @Composable
-private fun QuickAccessCard(item: QuickItem, modifier: Modifier = Modifier) {
-    Column(
+private fun QuickAccessCard(
+    item: QuickItem,
+    onClick: (QuickItem) -> Unit,
+    modifier: Modifier = Modifier
+){    Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF2A1550))
-            .padding(vertical = 18.dp),
+            .clickable { onClick(item) }
+            .padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(item.emoji, fontSize = 26.sp)
+        Text(item.emoji, fontSize = 34.sp)
         Spacer(Modifier.height(8.dp))
         Text(
             item.label,
             color = WhiteHome.copy(alpha = 0.85f),
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
         )

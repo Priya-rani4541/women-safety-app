@@ -25,7 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.painterResource
 
 // ─── Colors (shared palette) ──────────────────────────────────────────────────
 private val BgDarkLogin   = Color(0xFF1A0A3B)
@@ -210,23 +212,17 @@ fun LoginScreen(
                 )
             ) {
                 // Google dot (simplified)
-                Box(
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF4285F4), Color(0xFF34A853))
-                            )
-                        )
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text       = "Sign in with Google",
-                    color      = TextDark,
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.googlelogo),
+                        contentDescription = "Google",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Sign in with Google")
+                }
             }
 
             Spacer(Modifier.height(32.dp))

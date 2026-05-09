@@ -36,7 +36,7 @@ fun ProfileScreen(onBack: () -> Unit = {}) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF2B004D))
-            .padding(16.dp)
+            .padding(20.dp).padding(top = 48.dp)
     ) {
 
         Text("← Back", color = Color.White, modifier = Modifier.clickable { onBack() })

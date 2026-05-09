@@ -69,7 +69,7 @@ fun SheShieldSplashScreen(onFinished: () -> Unit = {}) {
     LaunchedEffect(Unit) {
         val steps = 100
         repeat(steps) {
-            delay(30L)
+            delay(20L)
             progress = (it + 1) / steps.toFloat()
         }
         delay(200)
