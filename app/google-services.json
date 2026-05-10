@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "475031794599",
+    "project_id": "sheshield-a9d5c",
+    "storage_bucket": "sheshield-a9d5c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475031794599:android:a28825bc9603534955fc82",
+        "android_client_info": {
+          "package_name": "com.example.womensafetyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBS4YKS6lA2U2vFqx45n4DJj9WPgxEg9gc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,6 +1,7 @@
 package com.example.womensafetyapp
 
 import android.os.Bundle
+import com.google.firebase.auth.FirebaseAuth
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
@@ -32,7 +33,20 @@ enum class Screen {
 
 @Composable
 fun SheShieldApp() {
-    var current by remember { mutableStateOf(Screen.SPLASH) }
+
+    // logged in user stays logged in
+    val auth = FirebaseAuth.getInstance()
+
+    var current by remember {
+        mutableStateOf(
+            if (auth.currentUser != null)
+                Screen.HOME
+            else
+                Screen.SPLASH
+        )
+    }
+
+
 
     when (current) {
         Screen.SPLASH -> SheShieldSplashScreen(
@@ -84,8 +98,11 @@ fun SheShieldApp() {
             onNavigate = { current = Screen.HOME }
         )
 
+
         Screen.PROFILE -> ProfileScreen(
-            onBack = { current = Screen.HOME }
+            onNavigateToContacts = {
+                current = Screen.EMERGENCY_CONTACTS
+            }
         )
     }
 }

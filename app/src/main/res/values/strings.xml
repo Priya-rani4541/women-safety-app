@@ -11,4 +11,6 @@
     <string name="title_activity_sossent_screen">SOSSentScreen</string>
     <string name="title_activity_crowd_network_screen">CrowdNetworkScreen</string>
     <string name="title_activity_profile_screen">ProfileScreen</string>
+    <string name="title_activity_emergency_contacts_screen">EmergencyContactsScreen</string>
+    <string name="title_activity_gaurdian">Gaurdian</string>
 </resources>

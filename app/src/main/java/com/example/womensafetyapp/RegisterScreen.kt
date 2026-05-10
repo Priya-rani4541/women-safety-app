@@ -1,6 +1,9 @@
 package com.example.womensafetyapp
 
 import androidx.compose.foundation.Canvas
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.firestore.FirebaseFirestore
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 private val BgReg        = Color(0xFFFDF5FF)
@@ -47,6 +51,9 @@ fun RegisterScreen(
     onCreateAccount: (name: String, phone: String, email: String, password: String) -> Unit = { _, _, _, _ -> },
     onSignIn: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+
     var fullName  by remember { mutableStateOf("") }
     var phone     by remember { mutableStateOf("") }
     var email     by remember { mutableStateOf("") }
@@ -178,7 +185,54 @@ fun RegisterScreen(
             // Create account button
             GradientButton(
                 text    = "Create My Shield",
-                onClick = { onCreateAccount(fullName, phone, email, password) }
+                onClick = {
+
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+
+                            if (task.isSuccessful) {
+
+                                val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+                                val userMap = hashMapOf(
+                                    "name" to fullName,
+                                    "phone" to phone,
+                                    "email" to email
+                                )
+
+                                FirebaseFirestore.getInstance()
+                                    .collection("users")
+                                    .document(uid)
+                                    .set(userMap)
+                                    .addOnSuccessListener {
+
+                                        Toast.makeText(
+                                            context,
+                                            "Account Created Successfully",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                        onCreateAccount(fullName, phone, email, password)
+                                    }
+                                    .addOnFailureListener {
+
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to save user data",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+
+                            } else {
+
+                                Toast.makeText(
+                                    context,
+                                    task.exception?.message ?: "Signup Failed",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                }
             )
 
             Spacer(Modifier.height(24.dp))

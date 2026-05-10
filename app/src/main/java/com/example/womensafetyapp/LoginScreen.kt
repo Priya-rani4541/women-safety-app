@@ -1,6 +1,9 @@
 package com.example.womensafetyapp
 
 import androidx.compose.foundation.background
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -52,9 +55,14 @@ fun LoginScreen(
     onGoogleSignIn: () -> Unit = {},
     onCreateAccount: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+
     var email    by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPass by remember { mutableStateOf(false) }
+
+
 
     Column(
         modifier = Modifier
@@ -169,8 +177,53 @@ fun LoginScreen(
 
             // Sign in button
             GradientButton(
-                text    = "Sign In Securely",
-                onClick = { onSignIn(email, password) }
+                text = "Sign In Securely",
+                onClick = {
+
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+
+                            if (task.isSuccessful) {
+
+                                Toast.makeText(
+                                    context,
+                                    "Login Successful",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                onSignIn(email, password)
+
+                            } else {
+
+                                val errorMessage = task.exception?.localizedMessage ?: ""
+
+                                val message = when {
+
+                                    errorMessage.contains("no user record", ignoreCase = true) ->
+                                        "User not registered"
+
+                                    errorMessage.contains("password is invalid", ignoreCase = true) ->
+                                        "Wrong password"
+
+                                    errorMessage.contains("credential is incorrect", ignoreCase = true) ->
+                                        "Wrong email or password"
+
+                                    errorMessage.contains("badly formatted", ignoreCase = true) ->
+                                        "Invalid email format"
+
+                                    else ->
+                                        errorMessage
+                                }
+
+                                Toast.makeText(
+                                    context,
+                                    message,
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                            }
+                        }
+                }
             )
 
             Spacer(Modifier.height(20.dp))
