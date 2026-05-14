@@ -1,32 +1,158 @@
 package com.example.womensafetyapp.viewmodel
 
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+
 import com.example.womensafetyapp.data.model.Guardian
 import com.example.womensafetyapp.data.model.Helpline
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ContactsViewModel : ViewModel() {
-    private val _guardians = mutableStateOf(
-        listOf(
-            Guardian("Meera Sharma", "Mother", "+91 98765 43210", "👩", Color(0xFFD946A8)),
-            Guardian("Rajesh Kumar", "Father", "+91 98765 12345", "👨", Color(0xFF4CAF50)),
-            Guardian("Anjali Verma", "Best Friend", "+91 99887 65432", "👩", Color(0xFFE8A020)),
-        )
-    )
-    val guardians: State<List<Guardian>> = _guardians
 
-    private val _helplines = mutableStateOf(
-        listOf(
-            Helpline("Police", "100", "🚓", Color(0xFFE3F0FF)),
-            Helpline("Ambulance", "108", "🚑", Color(0xFFFFE8E8)),
-            Helpline("Fire Service", "101", "🔥", Color(0xFFFFF3E0)),
-            Helpline("Women Helpline", "1091", "👩", Color(0xFFF3E5F5)),
-            Helpline("Child Helpline", "1098", "👶", Color(0xFFE8F5E9)),
-            Helpline("Pregnancy Medic", "102", "🏥", Color(0xFFE1F5FE)),
-            Helpline("Legal Aid", "15100", "⚖️", Color(0xFFFFF9C4)),
+    private val auth = FirebaseAuth.getInstance()
+
+    private val db = FirebaseFirestore.getInstance()
+
+    // -----------------------------
+    // GUARDIANS
+    // -----------------------------
+
+    var guardians by mutableStateOf<List<Guardian>>(emptyList())
+        private set
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    init {
+        loadGuardians()
+    }
+
+    // -----------------------------
+    // LOAD GUARDIANS
+    // -----------------------------
+
+    fun loadGuardians() {
+
+        val uid = auth.currentUser?.uid ?: return
+
+        isLoading = true
+
+        db.collection("users")
+            .document(uid)
+            .collection("contacts")
+            .get()
+            .addOnSuccessListener { result ->
+
+                guardians =
+                    result.documents.mapNotNull {
+
+                        it.toObject(Guardian::class.java)
+                    }
+
+                isLoading = false
+            }
+
+            .addOnFailureListener {
+
+                errorMessage = it.message
+
+                isLoading = false
+            }
+    }
+
+    // -----------------------------
+    // ADD GUARDIAN
+    // -----------------------------
+
+    fun addGuardian(
+        guardian: Guardian
+    ) {
+
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("users")
+            .document(uid)
+            .collection("contacts")
+            .add(guardian)
+
+            .addOnSuccessListener {
+
+                loadGuardians()
+            }
+
+            .addOnFailureListener {
+
+                errorMessage = it.message
+            }
+    }
+
+    // -----------------------------
+    // DELETE GUARDIAN
+    // -----------------------------
+
+    fun deleteGuardian(
+        documentId: String
+    ) {
+
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("users")
+            .document(uid)
+            .collection("contacts")
+            .document(documentId)
+            .delete()
+
+            .addOnSuccessListener {
+
+                loadGuardians()
+            }
+
+            .addOnFailureListener {
+
+                errorMessage = it.message
+            }
+    }
+
+    // -----------------------------
+    // HELPLINES
+    // -----------------------------
+
+    val helplines = listOf(
+
+        Helpline(
+            "Police",
+            "100",
+            "🚓"
+        ),
+
+        Helpline(
+            "Ambulance",
+            "108",
+            "🚑"
+        ),
+
+        Helpline(
+            "Fire Service",
+            "101",
+            "🔥"
+        ),
+
+        Helpline(
+            "Women Helpline",
+            "1091",
+            "👩"
+        ),
+
+        Helpline(
+            "Child Helpline",
+            "1098",
+            "👶"
         )
     )
-    val helplines: State<List<Helpline>> = _helplines
 }

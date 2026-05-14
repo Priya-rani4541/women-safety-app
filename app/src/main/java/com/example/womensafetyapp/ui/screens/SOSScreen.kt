@@ -3,7 +3,6 @@ package com.example.womensafetyapp.ui.screens
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,8 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.womensafetyapp.viewmodel.SOSViewModel
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 
 // ─── Colors ────────────────────────────────────────────────────────────────────
@@ -36,17 +35,26 @@ private val AvatarPurple  = Color(0xFF7C3AED)
 private val AvatarPink    = Color(0xFFD946A8)
 
 @Composable
-fun SOSScreen(
-    onCancel: () -> Unit = {},
-    onAlertSent: () -> Unit = {},
-    viewModel: SOSViewModel = viewModel()
-) {
-    val countdown by viewModel.countdown
-    val isSending by viewModel.isSending
+fun SOSScreen(onCancel: () -> Unit = {},
+              onAlertSent: () -> Unit = {}) {
+    val context = LocalContext.current
+
+    var countdown by remember { mutableIntStateOf(3) }
+    var isSending by remember { mutableStateOf(false) }
 
     // Countdown logic
     LaunchedEffect(Unit) {
-        viewModel.startCountdown(onAlertSent)
+
+        while (countdown > 0) {
+            delay(1000)
+            countdown--
+        }
+
+        // SEND SOS TO FIREBASE HERE
+        SOSManager.sendSOS(context)
+
+        // Navigate to success screen
+        onAlertSent()
     }
 
     // Pulsing ring animations

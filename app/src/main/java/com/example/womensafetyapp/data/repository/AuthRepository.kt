@@ -9,88 +9,168 @@ import kotlinx.coroutines.tasks.await
 class AuthRepository {
 
     private val auth = FirebaseAuth.getInstance()
+
     private val db = FirebaseFirestore.getInstance()
 
-    // 🔐 LOGIN
-    suspend fun login(email: String, password: String): String {
-        auth.signInWithEmailAndPassword(email, password).await()
+    // LOGIN
+    suspend fun login(
+        email: String,
+        password: String
+    ): Result<String> {
 
-        val user = auth.currentUser
+        return try {
 
-        return if (user?.isEmailVerified == true) {
-            "Login Success"
-        } else {
-            auth.signOut()
-            "Please verify your email"
+            auth.signInWithEmailAndPassword(
+                email,
+                password
+            ).await()
+
+            val user = auth.currentUser
+
+            if (user?.isEmailVerified == true) {
+
+                Result.success("Login Success")
+
+            } else {
+
+                auth.signOut()
+
+                Result.failure(
+                    Exception("Please verify your email")
+                )
+            }
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
         }
     }
 
-    // 📝 REGISTER (EMAIL)
-    suspend fun register(name: String, email: String, password: String): String {
+    // REGISTER
+    suspend fun register(
+        name: String,
+        email: String,
+        password: String
+    ): Result<String> {
 
-        auth.createUserWithEmailAndPassword(email, password).await()
+        return try {
 
-        val user = auth.currentUser ?: return "User error"
+            auth.createUserWithEmailAndPassword(
+                email,
+                password
+            ).await()
 
-        user.sendEmailVerification()
+            val user = auth.currentUser
+                ?: return Result.failure(
+                    Exception("User not found")
+                )
 
-        saveUserToFirestore(
-            uid = user.uid,
-            name = name,
-            email = email,
-            provider = "email"
-        )
+            user.sendEmailVerification().await()
 
-        return "Verification email sent"
+            saveUserToFirestore(
+                uid = user.uid,
+                name = name,
+                email = email,
+                provider = "email"
+            )
+
+            Result.success("Verification email sent")
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+        }
     }
 
-    // 🔵 GOOGLE LOGIN
-    suspend fun googleLogin(idToken: String): Boolean {
+    // GOOGLE LOGIN
+    suspend fun googleLogin(
+        idToken: String
+    ): Result<String> {
 
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        val result = auth.signInWithCredential(credential).await()
+        return try {
 
-        val user = result.user ?: return false
+            val credential =
+                GoogleAuthProvider.getCredential(
+                    idToken,
+                    null
+                )
 
-        saveUserToFirestore(
-            uid = user.uid,
-            name = user.displayName ?: "No Name",
-            email = user.email ?: "",
-            provider = "google"
-        )
+            val result =
+                auth.signInWithCredential(
+                    credential
+                ).await()
 
-        return true
+            val user = result.user
+                ?: return Result.failure(
+                    Exception("Google user not found")
+                )
+
+            saveUserToFirestore(
+                uid = user.uid,
+                name = user.displayName ?: "No Name",
+                email = user.email ?: "",
+                provider = "google"
+            )
+
+            Result.success("Google Sign-In Success")
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+        }
     }
 
-    // 🔁 RESET PASSWORD
-    suspend fun resetPassword(email: String): String {
-        auth.sendPasswordResetEmail(email).await()
-        return "Reset link sent"
+    // RESET PASSWORD
+    suspend fun resetPassword(
+        email: String
+    ): Result<String> {
+
+        return try {
+
+            auth.sendPasswordResetEmail(email)
+                .await()
+
+            Result.success("Reset link sent")
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+        }
     }
 
-    // 🔄 COMMON SAVE FUNCTION (IMPORTANT)
+    // SAVE USER
     private suspend fun saveUserToFirestore(
         uid: String,
         name: String,
         email: String,
         provider: String
     ) {
-        val data = mapOf(
+
+        val userData = hashMapOf(
+
             "uid" to uid,
+
             "name" to name,
+
             "email" to email,
+
             "provider" to provider,
+
             "createdAt" to System.currentTimeMillis()
         )
 
         db.collection("users")
             .document(uid)
-            .set(data, SetOptions.merge()) // ✅ FIXED
+            .set(userData, SetOptions.merge())
             .await()
     }
 
-    // 🚪 LOGOUT
+    // LOGOUT
     fun logout() {
+
         auth.signOut()
     }
+
+    // CURRENT USER
+    fun getCurrentUser() = auth.currentUser
 }

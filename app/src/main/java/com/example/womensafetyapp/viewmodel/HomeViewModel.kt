@@ -1,27 +1,70 @@
 package com.example.womensafetyapp.viewmodel
 
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+
 import com.example.womensafetyapp.data.model.QuickItem
 
 class HomeViewModel : ViewModel() {
-    private val _selectedNav = mutableStateOf("Home")
-    val selectedNav: State<String> = _selectedNav
 
-    private val _quickItems = mutableStateOf(
+    // -----------------------------
+    // SELECTED BOTTOM NAV
+    // -----------------------------
+
+    var selectedNav by mutableStateOf("Home")
+        private set
+
+    // -----------------------------
+    // QUICK ACTION ITEMS
+    // -----------------------------
+
+    var quickItems by mutableStateOf(
+
         listOf(
-            QuickItem("🗺️", "Safe Route"),
-            QuickItem("📍", "Live Track"),
-            QuickItem("🤝", "Network"),
-            QuickItem("🔦", "Flashlight"),
-            QuickItem("🚨", "Helpline"),
-            QuickItem("🎙️", "Record"),
+
+            QuickItem(
+                "🗺️",
+                "Safe Route"
+            ),
+
+            QuickItem(
+                "📍",
+                "Live Track"
+            ),
+
+            QuickItem(
+                "🤝",
+                "Network"
+            ),
+
+            QuickItem(
+                "🔦",
+                "Flashlight"
+            ),
+
+            QuickItem(
+                "🚨",
+                "Helpline"
+            ),
+
+            QuickItem(
+                "🎙️",
+                "Record"
+            )
         )
     )
-    val quickItems: State<List<QuickItem>> = _quickItems
+        private set
 
-    fun onNavSelected(label: String) {
-        _selectedNav.value = label
+    // -----------------------------
+    // NAVIGATION UPDATE
+    // -----------------------------
+
+    fun onNavSelected(
+        label: String
+    ) {
+
+        selectedNav = label
     }
 }

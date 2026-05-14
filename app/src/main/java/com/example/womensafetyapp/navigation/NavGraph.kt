@@ -1,23 +1,35 @@
 package com.example.womensafetyapp.navigation
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+
 import com.example.womensafetyapp.ui.screens.*
 import com.example.womensafetyapp.viewmodel.AuthViewModel
 
 sealed class Screen(val route: String) {
+
     object Splash : Screen("splash")
     object Login : Screen("login")
     object Register : Screen("register")
+
     object Home : Screen("home")
+
     object SOS : Screen("sos")
     object SOSSent : Screen("sos_sent")
+
     object EmergencyContacts : Screen("emergency_contacts")
-    object HelplineNumbers : Screen("helpline_numbers")
+
     object SafeRoute : Screen("safe_route")
-    object QuickTools : Screen("quick_tools")
+
     object CrowdNetwork : Screen("crowd_network")
+
     object Profile : Screen("profile")
 }
 
@@ -27,139 +39,197 @@ fun SetupNavGraph(
     authViewModel: AuthViewModel
 ) {
 
-    // ✅ Reactive login state
-    val isLoggedIn by remember { derivedStateOf { authViewModel.isLoggedIn } }
+    val isLoggedIn by remember {
+        derivedStateOf {
+            authViewModel.isLoggedIn
+        }
+    }
 
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route
     ) {
 
-        // 🔹 Splash (AUTO LOGIN HANDLING)
+        // SPLASH
         composable(Screen.Splash.route) {
+
             SheShieldSplashScreen()
 
-            // ✅ Navigation handled reactively
             LaunchedEffect(isLoggedIn) {
+
                 if (isLoggedIn) {
+
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+
+                        popUpTo(Screen.Splash.route) {
+                            inclusive = true
+                        }
                     }
+
                 } else {
+
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+
+                        popUpTo(Screen.Splash.route) {
+                            inclusive = true
+                        }
                     }
                 }
             }
         }
 
-        // 🔹 Login
+        // LOGIN
         composable(Screen.Login.route) {
+
             LoginScreen(
-                onForgotPassword = {
-                    // Optional future screen
-                },
+
                 onCreateAccount = {
+
                     navController.navigate(Screen.Register.route)
                 },
-                onLoginSuccess = {
+
+                onSignIn = { _, _ ->
+
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+
+                        popUpTo(Screen.Login.route) {
+                            inclusive = true
+                        }
                     }
-                },
-                viewModel = authViewModel
+                }
             )
         }
 
-        // 🔹 Register
+        // REGISTER
         composable(Screen.Register.route) {
+
             RegisterScreen(
+
                 onSignIn = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
-                    }
+
+                    navController.navigate(Screen.Login.route)
                 },
-                onRegisterSuccess = {
+
+                onCreateAccount = { _, _, _, _ ->
+
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+
+                        popUpTo(Screen.Register.route) {
+                            inclusive = true
+                        }
                     }
-                },
-                viewModel = authViewModel
+                }
             )
         }
 
-        // 🔹 Home
+        // HOME
         composable(Screen.Home.route) {
+
             HomeScreen(
+
                 onSOSTriggered = {
+
                     navController.navigate(Screen.SOS.route)
                 },
-                onNavigate = { label ->
-                    when (label) {
-                        "Network" -> navController.navigate(Screen.CrowdNetwork.route)
-                        "Safe Route" -> navController.navigate(Screen.SafeRoute.route)
-                        "Quick Tools" -> navController.navigate(Screen.QuickTools.route)
-                        "Contacts" -> navController.navigate(Screen.EmergencyContacts.route)
-                        "Helpline" -> navController.navigate(Screen.HelplineNumbers.route)
-                        "Profile" -> navController.navigate(Screen.Profile.route)
+
+                onNavigate = { screen ->
+
+                    when (screen) {
+
+                        Screen.Profile ->
+                            navController.navigate(Screen.Profile.route)
+
+                        Screen.SafeRoute ->
+                            navController.navigate(Screen.SafeRoute.route)
+
+                        Screen.EmergencyContacts ->
+                            navController.navigate(Screen.EmergencyContacts.route)
+
+                        Screen.CrowdNetwork ->
+                            navController.navigate(Screen.CrowdNetwork.route)
+
+                        else -> {}
                     }
                 }
             )
         }
 
-        // 🔹 SOS
+        // SOS
         composable(Screen.SOS.route) {
+
             SOSScreen(
-                onCancel = { navController.popBackStack() },
-                onAlertSent = { navController.navigate(Screen.SOSSent.route) }
+
+                onCancel = {
+                    navController.popBackStack()
+                },
+
+                onAlertSent = {
+
+                    navController.navigate(Screen.SOSSent.route)
+                }
             )
         }
 
+        // SOS SENT
         composable(Screen.SOSSent.route) {
+
             SOSSentScreen(
+
                 onCancelAlert = {
+
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.SOSSent.route) { inclusive = true }
+
+                        popUpTo(Screen.Home.route) {
+                            inclusive = false
+                        }
                     }
                 }
             )
         }
 
+        // CONTACTS
         composable(Screen.EmergencyContacts.route) {
-            EmergencyContactsScreen(onBack = { navController.popBackStack() })
-        }
 
-        composable(Screen.HelplineNumbers.route) {
-            HelplineNumbersScreen(onBack = { navController.popBackStack() })
-        }
+            EmergencyContactScreen(
 
-        composable(Screen.SafeRoute.route) {
-            SafeRouteScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable(Screen.QuickTools.route) {
-            QuickToolsScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable(Screen.CrowdNetwork.route) {
-            CrowdNetworkScreen(
-                onNavigate = { label ->
-                    if (label == "Home") {
-                        navController.navigate(Screen.Home.route)
-                    }
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
 
-        // 🔹 Profile
+        // SAFE ROUTE
+        composable(Screen.SafeRoute.route) {
+
+            SafeRouteScreen(
+
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // CROWD NETWORK
+        composable(Screen.CrowdNetwork.route) {
+
+            CrowdNetworkScreen(
+
+                onNavigate = {
+                    navController.navigate(Screen.Home.route)
+                }
+            )
+        }
+
+        // PROFILE
         composable(Screen.Profile.route) {
+
             ProfileScreen(
-                onBack = { navController.popBackStack() },
-                onLogout = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+
+                onNavigateToContacts = {
+
+                    navController.navigate(
+                        Screen.EmergencyContacts.route
+                    )
                 }
             )
         }

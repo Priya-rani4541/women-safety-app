@@ -1,28 +1,112 @@
 package com.example.womensafetyapp.viewmodel
 
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
 class RegisterViewModel : ViewModel() {
-    private val _fullName = mutableStateOf("")
-    val fullName: State<String> = _fullName
 
-    private val _email = mutableStateOf("")
-    val email: State<String> = _email
+    // -----------------------------
+    // FULL NAME
+    // -----------------------------
 
-    private val _phone = mutableStateOf("")
-    val phone: State<String> = _phone
+    var fullName by mutableStateOf("")
+        private set
 
-    private val _password = mutableStateOf("")
-    val password: State<String> = _password
+    // -----------------------------
+    // EMAIL
+    // -----------------------------
 
-    private val _showPassword = mutableStateOf(false)
-    val showPassword: State<Boolean> = _showPassword
+    var email by mutableStateOf("")
+        private set
 
-    fun onFullNameChange(newName: String) { _fullName.value = newName }
-    fun onEmailChange(newEmail: String) { _email.value = newEmail }
-    fun onPhoneChange(newPhone: String) { _phone.value = newPhone }
-    fun onPasswordChange(newPass: String) { _password.value = newPass }
-    fun togglePasswordVisibility() { _showPassword.value = !_showPassword.value }
+    // -----------------------------
+    // PHONE
+    // -----------------------------
+
+    var phone by mutableStateOf("")
+        private set
+
+    // -----------------------------
+    // PASSWORD
+    // -----------------------------
+
+    var password by mutableStateOf("")
+        private set
+
+    // -----------------------------
+    // PASSWORD VISIBILITY
+    // -----------------------------
+
+    var showPassword by mutableStateOf(false)
+        private set
+
+    // -----------------------------
+    // UPDATE FULL NAME
+    // -----------------------------
+
+    fun onFullNameChange(
+        newName: String
+    ) {
+
+        fullName = newName
+    }
+
+    // -----------------------------
+    // UPDATE EMAIL
+    // -----------------------------
+
+    fun onEmailChange(
+        newEmail: String
+    ) {
+
+        email = newEmail
+    }
+
+    // -----------------------------
+    // UPDATE PHONE
+    // -----------------------------
+
+    fun onPhoneChange(
+        newPhone: String
+    ) {
+
+        phone = newPhone
+    }
+
+    // -----------------------------
+    // UPDATE PASSWORD
+    // -----------------------------
+
+    fun onPasswordChange(
+        newPassword: String
+    ) {
+
+        password = newPassword
+    }
+
+    // -----------------------------
+    // TOGGLE PASSWORD
+    // -----------------------------
+
+    fun togglePasswordVisibility() {
+
+        showPassword = !showPassword
+    }
+
+    // -----------------------------
+    // CLEAR ALL FIELDS
+    // -----------------------------
+
+    fun clearFields() {
+
+        fullName = ""
+
+        email = ""
+
+        phone = ""
+
+        password = ""
+    }
 }

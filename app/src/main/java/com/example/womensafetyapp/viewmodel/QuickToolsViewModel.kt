@@ -2,61 +2,187 @@ package com.example.womensafetyapp.viewmodel
 
 import android.content.Context
 import android.hardware.camera2.CameraManager
-import androidx.compose.runtime.State
+
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.setValue
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import com.example.womensafetyapp.data.model.ToolItem
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class QuickToolsViewModel : ViewModel() {
-    private val _tools = mutableStateOf(
+
+    // -----------------------------
+    // QUICK TOOLS
+    // -----------------------------
+
+    var tools by mutableStateOf(
+
         listOf(
-            ToolItem("🎥", "Stealth Recorder", "Record audio & video silently while screen is off", "LIVE", Color(0xFFE8325A)),
-            ToolItem("🔦", "Strobe SOS", "Flash light in SOS pattern to attract attention"),
-            ToolItem("🎭", "Fake Call", "Simulate an incoming call to exit situations", "NEW", Color(0xFF9B32D6)),
-            ToolItem("📊", "Area Heat Map", "View community-reported danger spots nearby"),
-            ToolItem("🤝", "Safety Buddy", "Match with nearby verified SheShield users"),
-            ToolItem("🎙️", "Voice Trigger", "Set a code word to instantly trigger SOS"),
+
+            ToolItem(
+                "🎥",
+                "Stealth Recorder",
+                "Record audio & video silently while screen is off",
+                "LIVE",
+                "#E8325A"
+            ),
+
+            ToolItem(
+                "🔦",
+                "Strobe SOS",
+                "Flash light in SOS pattern to attract attention"
+            ),
+
+            ToolItem(
+                "🎭",
+                "Fake Call",
+                "Simulate an incoming call to exit unsafe situations",
+                "NEW",
+                "#9333EA"
+            ),
+
+            ToolItem(
+                "📊",
+                "Area Heat Map",
+                "View community-reported danger spots nearby"
+            ),
+
+            ToolItem(
+                "🤝",
+                "Safety Buddy",
+                "Match with nearby verified SheShield users"
+            ),
+
+            ToolItem(
+                "🎙️",
+                "Voice Trigger",
+                "Set a code word to instantly trigger SOS"
+            )
         )
     )
-    val tools: State<List<ToolItem>> = _tools
+        private set
 
-    private val _strobeActive = mutableStateOf(false)
-    val strobeActive: State<Boolean> = _strobeActive
+    // -----------------------------
+    // STROBE STATE
+    // -----------------------------
 
-    fun toggleStrobe(context: Context) {
-        _strobeActive.value = !_strobeActive.value
-        if (_strobeActive.value) {
+    var strobeActive by mutableStateOf(false)
+        private set
+
+    // -----------------------------
+    // TOGGLE STROBE
+    // -----------------------------
+
+    fun toggleStrobe(
+        context: Context
+    ) {
+
+        strobeActive = !strobeActive
+
+        if (strobeActive) {
+
             triggerStrobeSOS(context)
         }
     }
 
-    private fun triggerStrobeSOS(context: Context) {
-        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager ?: return
-        val cameraId = try { cameraManager.cameraIdList.firstOrNull() } catch (e: Exception) { null } ?: return
-        
+    // -----------------------------
+    // STROBE SOS
+    // -----------------------------
+
+    private fun triggerStrobeSOS(
+        context: Context
+    ) {
+
+        val cameraManager =
+            context.getSystemService(
+                Context.CAMERA_SERVICE
+            ) as? CameraManager ?: return
+
+        val cameraId = try {
+
+            cameraManager.cameraIdList.firstOrNull()
+
+        } catch (e: Exception) {
+
+            null
+        } ?: return
+
         viewModelScope.launch(Dispatchers.IO) {
-            val sosTiming = listOf(200L, 200L, 200L, 600L, 600L, 600L, 200L, 200L, 200L)
-            repeat(3) {
-                if (!_strobeActive.value) return@repeat
-                sosTiming.forEach { duration ->
-                    if (!_strobeActive.value) return@forEach
-                    try {
-                        cameraManager.setTorchMode(cameraId, true)
+
+            try {
+
+                val sosPattern = listOf(
+
+                    200L,
+                    200L,
+                    200L,
+
+                    600L,
+                    600L,
+                    600L,
+
+                    200L,
+                    200L,
+                    200L
+                )
+
+                repeat(3) {
+
+                    if (!strobeActive)
+                        return@repeat
+
+                    sosPattern.forEach { duration ->
+
+                        if (!strobeActive)
+                            return@forEach
+
+                        cameraManager.setTorchMode(
+                            cameraId,
+                            true
+                        )
+
                         delay(duration)
-                        cameraManager.setTorchMode(cameraId, false)
-                        delay(100)
-                    } catch (_: Exception) {}
+
+                        cameraManager.setTorchMode(
+                            cameraId,
+                            false
+                        )
+
+                        delay(120)
+                    }
+
+                    delay(1000)
                 }
-                delay(1000)
+
+            } catch (_: Exception) {
+
             }
-            withContext(Dispatchers.Main) {
-                _strobeActive.value = false
+
+            finally {
+
+                withContext(Dispatchers.Main) {
+
+                    strobeActive = false
+
+                    try {
+
+                        cameraManager.setTorchMode(
+                            cameraId,
+                            false
+                        )
+
+                    } catch (_: Exception) {
+
+                    }
+                }
             }
         }
     }

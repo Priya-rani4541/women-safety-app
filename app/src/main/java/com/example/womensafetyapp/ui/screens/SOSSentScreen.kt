@@ -19,8 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.womensafetyapp.viewmodel.SOSSentViewModel
 
 private val SSBg      = Color(0xFF1A0410)
 private val SSRed     = Color(0xFFD93025)
@@ -32,13 +30,8 @@ private val SSCancel  = Color(0xFF2A1530)
 
 @Composable
 fun SOSSentScreen(
-    onCancelAlert: () -> Unit = {},
-    viewModel: SOSSentViewModel = viewModel()
-) {
+    onCancelAlert: () -> Unit = {}) {
     val context = LocalContext.current
-    val locationName by viewModel.locationName
-    val coordinates by viewModel.coordinates
-    val notifiedGuardians by viewModel.notifiedGuardians
 
     val infiniteTransition = rememberInfiniteTransition(label = "sosSentPulse")
     val pulse by infiniteTransition.animateFloat(
@@ -113,9 +106,9 @@ fun SOSSentScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text("📍  YOUR LOCATION", color = SSGray, fontSize = 10.sp, letterSpacing = 1.5.sp)
                     Spacer(Modifier.height(8.dp))
-                    Text(locationName, color = SSWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Connaught Place, New Delhi", color = SSWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
-                    Text(coordinates, color = SSGray, fontSize = 12.sp)
+                    Text("28.6315° N, 77.2167° E", color = SSGray, fontSize = 12.sp)
                 }
             }
 
@@ -131,7 +124,7 @@ fun SOSSentScreen(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text(notifiedGuardians, color = SSGray, fontSize = 12.sp)
+            Text("Meera, Rajesh & Anjali notified", color = SSGray, fontSize = 12.sp)
 
             Spacer(Modifier.height(28.dp))
 

@@ -1,7 +1,8 @@
 package com.example.womensafetyapp.viewmodel
 
-import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.womensafetyapp.data.repository.AuthRepository
@@ -10,121 +11,258 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
 
-    private val repo = AuthRepository()
+    private val repository = AuthRepository()
+
     private val auth = FirebaseAuth.getInstance()
 
-    // 🔹 UI STATE
-    var state by mutableStateOf("")
-        private set
+    // --------------------------------------------------
+    // UI STATES
+    // --------------------------------------------------
 
     var isLoading by mutableStateOf(false)
         private set
 
-    var isLoggedIn by mutableStateOf(false)
+    var isLoggedIn by mutableStateOf(
+        auth.currentUser != null
+    )
         private set
 
-    // ✅ AUTO LOGIN (IMPORTANT)
-    init {
-        isLoggedIn = auth.currentUser != null
-    }
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
 
-    // 🔐 LOGIN (EMAIL)
-    fun login(email: String, password: String) {
-        Log.d("LOGIN_DEBUG", "Login called with: $email")
+    var successMessage by mutableStateOf<String?>(null)
+        private set
+
+    // --------------------------------------------------
+    // LOGIN
+    // --------------------------------------------------
+
+    fun login(
+        email: String,
+        password: String
+    ) {
+
+        if (
+            email.isBlank() ||
+            password.isBlank()
+        ) {
+
+            errorMessage = "Please fill all fields"
+            return
+        }
 
         viewModelScope.launch {
+
             isLoading = true
 
+            errorMessage = null
+            successMessage = null
+
             try {
-                Log.d("LOGIN_DEBUG", "Calling Firebase login")
 
-                state = repo.login(email, password)
+                val result =
+                    repository.login(
+                        email,
+                        password
+                    )
 
-                Log.d("LOGIN_DEBUG", "Result: $state")
+                result.onSuccess {
 
-                if (state == "Login Success") {
+                    successMessage = it
+
                     isLoggedIn = true
                 }
 
-            } catch (e: Exception) {
-                Log.e("LOGIN_DEBUG", "Error: ${e.message}")
-                state = e.message ?: "Login failed"
-            }
+                result.onFailure {
 
-            isLoading = false
-        }
-    }
-
-    // 📝 REGISTER
-    fun register(name: String, email: String, password: String) {
-        viewModelScope.launch {
-            isLoading = true
-
-            try {
-                val result = repo.register(name, email, password)
-                state = result
-            } catch (e: Exception) {
-                state = e.message ?: "Registration failed"
-            }
-
-            isLoading = false
-        }
-    }
-
-    // 🔁 RESET PASSWORD
-    fun resetPassword(email: String) {
-        viewModelScope.launch {
-            isLoading = true
-
-            try {
-                val result = repo.resetPassword(email)
-                state = result
-            } catch (e: Exception) {
-                state = e.message ?: "Reset failed"
-            }
-
-            isLoading = false
-        }
-    }
-
-    // 🔵 GOOGLE LOGIN
-    fun googleLogin(idToken: String) {
-        viewModelScope.launch {
-            isLoading = true
-
-            try {
-                if (idToken.isBlank()) {
-                    state = "Google token error"
-                    isLoading = false
-                    return@launch
+                    errorMessage =
+                        it.message ?: "Login failed"
                 }
 
-                val success = repo.googleLogin(idToken)
+            } catch (e: Exception) {
 
-                if (success) {
+                errorMessage =
+                    e.message ?: "Login failed"
+            }
+
+            isLoading = false
+        }
+    }
+
+    // --------------------------------------------------
+    // REGISTER
+    // --------------------------------------------------
+
+    fun register(
+        name: String,
+        email: String,
+        password: String
+    ) {
+
+        if (
+            name.isBlank() ||
+            email.isBlank() ||
+            password.isBlank()
+        ) {
+
+            errorMessage = "Please fill all fields"
+            return
+        }
+
+        viewModelScope.launch {
+
+            isLoading = true
+
+            errorMessage = null
+            successMessage = null
+
+            try {
+
+                val result =
+                    repository.register(
+                        name,
+                        email,
+                        password
+                    )
+
+                result.onSuccess {
+
+                    successMessage = it
+                }
+
+                result.onFailure {
+
+                    errorMessage =
+                        it.message ?: "Registration failed"
+                }
+
+            } catch (e: Exception) {
+
+                errorMessage =
+                    e.message ?: "Registration failed"
+            }
+
+            isLoading = false
+        }
+    }
+
+    // --------------------------------------------------
+    // GOOGLE LOGIN
+    // --------------------------------------------------
+
+    fun googleLogin(
+        idToken: String
+    ) {
+
+        if (idToken.isBlank()) {
+
+            errorMessage = "Google token missing"
+            return
+        }
+
+        viewModelScope.launch {
+
+            isLoading = true
+
+            errorMessage = null
+            successMessage = null
+
+            try {
+
+                val result =
+                    repository.googleLogin(idToken)
+
+                result.onSuccess {
+
+                    successMessage = it
+
                     isLoggedIn = true
-                    state = "Google Sign-In Success"
-                } else {
-                    state = "Google Sign-In Failed"
+                }
+
+                result.onFailure {
+
+                    errorMessage =
+                        it.message ?: "Google Sign-In Failed"
                 }
 
             } catch (e: Exception) {
-                state = e.message ?: "Google login failed"
+
+                errorMessage =
+                    e.message ?: "Google login failed"
             }
 
             isLoading = false
         }
     }
 
-    // 🔄 RESET STATE (for navigation reuse)
-    fun resetState() {
-        state = ""
+    // --------------------------------------------------
+    // RESET PASSWORD
+    // --------------------------------------------------
+
+    fun resetPassword(
+        email: String
+    ) {
+
+        if (email.isBlank()) {
+
+            errorMessage = "Enter email"
+            return
+        }
+
+        viewModelScope.launch {
+
+            isLoading = true
+
+            errorMessage = null
+            successMessage = null
+
+            try {
+
+                val result =
+                    repository.resetPassword(email)
+
+                result.onSuccess {
+
+                    successMessage = it
+                }
+
+                result.onFailure {
+
+                    errorMessage =
+                        it.message ?: "Reset failed"
+                }
+
+            } catch (e: Exception) {
+
+                errorMessage =
+                    e.message ?: "Reset failed"
+            }
+
+            isLoading = false
+        }
     }
 
-    // 🚪 LOGOUT
+    // --------------------------------------------------
+    // LOGOUT
+    // --------------------------------------------------
+
     fun logout() {
-        repo.logout()
+
+        repository.logout()
+
         isLoggedIn = false
-        state = "Logged out"
+
+        successMessage = "Logged out"
+    }
+
+    // --------------------------------------------------
+    // CLEAR STATES
+    // --------------------------------------------------
+
+    fun clearMessages() {
+
+        errorMessage = null
+
+        successMessage = null
     }
 }

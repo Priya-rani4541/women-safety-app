@@ -17,9 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.womensafetyapp.data.model.ToolItem
-import com.example.womensafetyapp.viewmodel.QuickToolsViewModel
 import kotlinx.coroutines.*
 
 private val QTBg      = Color(0xFF1A0A3B)
@@ -31,15 +28,31 @@ private val QTGray    = Color(0xFF9B8BB0)
 private val QTRed     = Color(0xFFE8325A)
 private val QTPurple  = Color(0xFF9B32D6)
 
+data class ToolItem(
+    val emoji: String,
+    val title: String,
+    val desc: String,
+    val badge: String? = null,
+    val badgeColor: Color = Color.Red
+)
+
 @Composable
 fun QuickToolsScreen(
     onBack: () -> Unit = {},
-    onFakeCall: () -> Unit = {},
-    viewModel: QuickToolsViewModel = viewModel()
+    onFakeCall: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val strobeActive by viewModel.strobeActive
-    val tools by viewModel.tools
+    var strobActive by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val tools = listOf(
+        ToolItem("🎥", "Stealth Recorder",  "Record audio & video silently while screen is off", "LIVE", Color(0xFFE8325A)),
+        ToolItem("🔦", "Strobe SOS",        "Flash light in SOS pattern to attract attention"),
+        ToolItem("🎭", "Fake Call",         "Simulate an incoming call to exit situations",      "NEW",  Color(0xFF9B32D6)),
+        ToolItem("📊", "Area Heat Map",     "View community-reported danger spots nearby"),
+        ToolItem("🤝", "Safety Buddy",      "Match with nearby verified SheShield users"),
+        ToolItem("🎙️", "Voice Trigger",    "Set a code word to instantly trigger SOS"),
+    )
 
     Column(modifier = Modifier.fillMaxSize().background(QTBg)) {
         // Header
@@ -74,7 +87,10 @@ fun QuickToolsScreen(
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 when (tool.title) {
-                                    "Strobe SOS"   -> viewModel.toggleStrobe(context)
+                                    "Strobe SOS"   -> {
+                                        strobActive = !strobActive
+                                        if (strobActive) triggerStrobeSOS(context, scope) { strobActive = false }
+                                    }
                                     "Fake Call"    -> onFakeCall()
                                 }
                             }
@@ -121,6 +137,27 @@ private fun ToolCard(tool: ToolItem, modifier: Modifier, onClick: () -> Unit) {
             Spacer(Modifier.height(5.dp))
             Text(tool.desc, color = QTGray, fontSize = 11.sp, lineHeight = 15.sp)
         }
+    }
+}
+
+private fun triggerStrobeSOS(context: Context, scope: CoroutineScope, onDone: () -> Unit) {
+    val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager ?: return
+    val cameraId = try { cameraManager.cameraIdList.firstOrNull() } catch (e: Exception) { null } ?: return
+    // SOS = ... --- ... (3 short, 3 long, 3 short)
+    val sosTiming = listOf(200L, 200L, 200L, 600L, 600L, 600L, 200L, 200L, 200L)
+    scope.launch(Dispatchers.IO) {
+        repeat(3) {
+            sosTiming.forEach { duration ->
+                try {
+                    cameraManager.setTorchMode(cameraId, true)
+                    delay(duration)
+                    cameraManager.setTorchMode(cameraId, false)
+                    delay(100)
+                } catch (_: Exception) {}
+            }
+            delay(1000)
+        }
+        withContext(Dispatchers.Main) { onDone() }
     }
 }
 

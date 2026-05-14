@@ -13,4 +13,6 @@
     <string name="title_activity_profile_screen">ProfileScreen</string>
     <string name="title_activity_emergency_contacts_screen">EmergencyContactsScreen</string>
     <string name="title_activity_gaurdian">Gaurdian</string>
+    <string name="title_activity_location_utils">LocationUtils</string>
+    <string name="title_activity_sosmanager">SOSManager</string>
 </resources>

@@ -1,20 +1,72 @@
 package com.example.womensafetyapp.viewmodel
 
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
 class LoginViewModel : ViewModel() {
-    private val _email = mutableStateOf("")
-    val email: State<String> = _email
 
-    private val _password = mutableStateOf("")
-    val password: State<String> = _password
+    // -----------------------------
+    // EMAIL
+    // -----------------------------
 
-    private val _showPassword = mutableStateOf(false)
-    val showPassword: State<Boolean> = _showPassword
+    var email by mutableStateOf("")
+        private set
 
-    fun onEmailChange(newEmail: String) { _email.value = newEmail }
-    fun onPasswordChange(newPass: String) { _password.value = newPass }
-    fun togglePasswordVisibility() { _showPassword.value = !_showPassword.value }
+    // -----------------------------
+    // PASSWORD
+    // -----------------------------
+
+    var password by mutableStateOf("")
+        private set
+
+    // -----------------------------
+    // PASSWORD VISIBILITY
+    // -----------------------------
+
+    var showPassword by mutableStateOf(false)
+        private set
+
+    // -----------------------------
+    // UPDATE EMAIL
+    // -----------------------------
+
+    fun onEmailChange(
+        newEmail: String
+    ) {
+
+        email = newEmail
+    }
+
+    // -----------------------------
+    // UPDATE PASSWORD
+    // -----------------------------
+
+    fun onPasswordChange(
+        newPassword: String
+    ) {
+
+        password = newPassword
+    }
+
+    // -----------------------------
+    // TOGGLE PASSWORD
+    // -----------------------------
+
+    fun togglePasswordVisibility() {
+
+        showPassword = !showPassword
+    }
+
+    // -----------------------------
+    // CLEAR FIELDS
+    // -----------------------------
+
+    fun clearFields() {
+
+        email = ""
+
+        password = ""
+    }
 }
