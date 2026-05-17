@@ -8,8 +8,11 @@ object LocationUtils {
 
     @SuppressLint("MissingPermission")
     fun getCurrentLocation(
+
         context: Context,
+
         onLocationReceived: (Double, Double) -> Unit
+
     ) {
 
         val fusedLocationClient =
