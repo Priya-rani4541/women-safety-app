@@ -8,14 +8,23 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
 import android.telephony.SmsManager
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
+import com.example.womensafetyapp.utils.AudioRecorder
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.firestore.FirebaseFirestore
+import java.io.File
 
 object SOSManager {
 
     @SuppressLint("MissingPermission")
-    fun sendSOS(context: Context) {
+    fun sendSOS(
+        context: Context,
+        userId: String,
+        audioRecorder: AudioRecorder
+    ) {
 
         val fusedLocationClient =
             LocationServices.getFusedLocationProviderClient(context)
@@ -33,46 +42,119 @@ object SOSManager {
 
                     val message =
                         """
-HELP! I am in danger.
+🚨 HELP! I am in danger.
 
-My live location:
+📍 My Live Location:
 $mapsLink
                         """.trimIndent()
 
-                    val emergencyContacts = listOf(
-                        "9876543210",
-                        "9876543211"
-                    )
+                    // =========================
+                    // SEND SMS TO CONTACTS
+                    // =========================
 
-                    if (
-                        ActivityCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.SEND_SMS
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
+                    FirebaseFirestore.getInstance()
+                        .collection("emergency_contacts")
+                        .whereEqualTo("userId", userId)
+                        .get()
+                        .addOnSuccessListener { result ->
 
-                        val smsManager =
-                            SmsManager.getDefault()
+                            if (
+                                ActivityCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.SEND_SMS
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                Log.d("SOS_DEBUG", "Preparing to send SMS")
+                                val smsManager =
+                                    SmsManager.getDefault()
 
-                        emergencyContacts.forEach {
+                                for (document in result.documents) {
 
-                            smsManager.sendTextMessage(
-                                it,
-                                null,
-                                message,
-                                null,
-                                null
-                            )
+                                    val phone =
+                                        document.getString("phone")
+
+                                    if (!phone.isNullOrEmpty()) {
+                                        Log.d(
+                                            "SOS_DEBUG",
+                                            "Sending SMS to: $phone"
+                                        )
+                                        smsManager.sendTextMessage(
+                                            phone,
+                                            null,
+                                            message,
+                                            null,
+                                            null
+                                        )
+                                        Log.d(
+                                            "SOS_DEBUG",
+                                            "SMS SENT SUCCESSFULLY"
+                                        )
+                                    }
+                                }
+
+                                Toast.makeText(
+                                    context,
+                                    "SOS SMS Sent Successfully",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
 
-                        Toast.makeText(
+                    // =========================
+                    // SHARE AUDIO RECORDING
+                    // =========================
+
+                    val audioFile: File? =
+                        audioRecorder.getRecordingFile()
+
+                    if (audioFile != null && audioFile.exists()) {
+
+                        val uri = FileProvider.getUriForFile(
                             context,
-                            "SOS Sent Successfully",
-                            Toast.LENGTH_LONG
-                        ).show()
+                            "${context.packageName}.provider",
+                            audioFile
+                        )
+
+                        val shareIntent =
+                            Intent(Intent.ACTION_SEND)
+
+                        shareIntent.type = "audio/*"
+
+                        shareIntent.putExtra(
+                            Intent.EXTRA_STREAM,
+                            uri
+                        )
+
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT,
+                            """
+🚨 HELP! I am in danger.
+
+📍 Live Location:
+$mapsLink
+                            """.trimIndent()
+                        )
+
+                        shareIntent.addFlags(
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+
+                        shareIntent.addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK
+                        )
+
+                        context.startActivity(
+                            Intent.createChooser(
+                                shareIntent,
+                                "Send SOS Audio"
+                            )
+                        )
                     }
 
-                    // OPEN NEARBY POLICE STATION
+                    // =========================
+                    // OPEN NEARBY POLICE
+                    // =========================
+
                     val policeIntent = Intent(
                         Intent.ACTION_VIEW,
                         Uri.parse(

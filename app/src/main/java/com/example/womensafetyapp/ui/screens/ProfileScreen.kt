@@ -113,7 +113,9 @@ fun ProfileScreen(
             }
 
         // Fetch guardian count
-        db.collection("users").document(uid).collection("contacts").get()
+        db.collection("emergency_contacts")
+            .whereEqualTo("userId", uid)
+            .get()
             .addOnSuccessListener { result ->
                 profile = profile.copy(guardianCount = result.size())
                 isLoading = false

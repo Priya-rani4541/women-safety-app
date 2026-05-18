@@ -96,5 +96,7 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("org.osmdroid:osmdroid-wms:6.1.18")
 
+    //storage
+    implementation("com.google.firebase:firebase-storage-ktx")
 
 }

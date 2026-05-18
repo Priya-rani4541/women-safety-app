@@ -3,10 +3,10 @@ package com.example.womensafetyapp.utils
 import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
-import java.io.File
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import java.io.File
 
 class AudioRecorder(
     private val context: Context
@@ -14,14 +14,16 @@ class AudioRecorder(
 
     private var recorder: MediaRecorder? = null
 
-    private var outputFile: String = ""
+    private var audioFile: File? = null
 
     fun startRecording() {
 
         try {
 
-            outputFile =
-                "/storage/emulated/0/Download/sos_recording.mp3"
+            audioFile = File(
+                context.getExternalFilesDir(null),
+                "sos_recording.mp3"
+            )
 
             recorder =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -38,21 +40,18 @@ class AudioRecorder(
 
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
 
-                setOutputFile(outputFile)
-
-                // ✅ DEBUG LOG
-                Log.d("SOS_AUDIO", "startRecording called")
+                setOutputFile(audioFile!!.absolutePath)
 
                 prepare()
 
                 start()
 
-                // ✅ DEBUG LOG
                 Log.d(
                     "SOS_AUDIO",
-                    "recording started successfully"
+                    "Recording Started"
                 )
 
+                // AUTO STOP AFTER 10 SEC
                 Handler(Looper.getMainLooper()).postDelayed({
 
                     stopRecording()
@@ -62,10 +61,9 @@ class AudioRecorder(
 
         } catch (e: Exception) {
 
-            // ✅ DEBUG ERROR LOG
             Log.e(
                 "SOS_AUDIO",
-                "recording failed",
+                "Recording Failed",
                 e
             )
 
@@ -82,24 +80,20 @@ class AudioRecorder(
                 stop()
 
                 release()
-                Log.d(
-                    "SOS_AUDIO",
-                    "recording stopped successfully"
-                )
             }
 
             recorder = null
 
             Log.d(
                 "SOS_AUDIO",
-                "recording stopped successfully"
+                "Recording Stopped"
             )
 
         } catch (e: Exception) {
 
             Log.e(
                 "SOS_AUDIO",
-                "stop recording failed",
+                "Stop Failed",
                 e
             )
 
@@ -107,8 +101,8 @@ class AudioRecorder(
         }
     }
 
-    fun getRecordingFile(): File {
+    fun getRecordingFile(): File? {
 
-        return File(outputFile)
+        return audioFile
     }
 }

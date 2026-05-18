@@ -7,7 +7,12 @@ import android.location.Location
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +35,7 @@ import com.example.womensafetyapp.SOSManager
 import com.example.womensafetyapp.data.model.SosAlert
 import com.example.womensafetyapp.utils.AudioRecorder
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 
@@ -64,7 +70,6 @@ fun SOSScreen(
         mutableStateOf(false)
     }
 
-    // SAVE SOS ALERT
     @SuppressLint("MissingPermission")
     fun sendSOSAlert() {
 
@@ -112,7 +117,6 @@ fun SOSScreen(
             }
     }
 
-    // MULTIPLE PERMISSIONS
     val permissionLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -124,13 +128,28 @@ fun SOSScreen(
                 val audioGranted =
                     permissions[Manifest.permission.RECORD_AUDIO] == true
 
-                if (locationGranted && audioGranted) {
+                val smsGranted =
+                    permissions[Manifest.permission.SEND_SMS] == true
+
+                if (
+                    locationGranted &&
+                    audioGranted &&
+                    smsGranted
+                ) {
 
                     try {
 
                         audioRecorder.startRecording()
 
-                        SOSManager.sendSOS(context)
+                        val userId =
+                            FirebaseAuth.getInstance()
+                                .currentUser?.uid ?: ""
+
+                        SOSManager.sendSOS(
+                            context = context,
+                            userId = userId,
+                            audioRecorder = audioRecorder
+                        )
 
                         sendSOSAlert()
 
@@ -180,21 +199,33 @@ fun SOSScreen(
                 Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED
 
-        if (locationPermission && audioPermission) {
+        val smsPermission =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.SEND_SMS
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (
+            locationPermission &&
+            audioPermission &&
+            smsPermission
+        ) {
 
             try {
 
                 audioRecorder.startRecording()
 
-                SOSManager.sendSOS(context)
+                val userId =
+                    FirebaseAuth.getInstance()
+                        .currentUser?.uid ?: ""
+
+                SOSManager.sendSOS(
+                    context = context,
+                    userId = userId,
+                    audioRecorder = audioRecorder
+                )
 
                 sendSOSAlert()
-
-                // WAIT 10 SEC
-//                delay(10000)
-
-                // STOP RECORDING
-//                audioRecorder.stopRecording()
 
             } catch (e: Exception) {
 
@@ -212,7 +243,8 @@ fun SOSScreen(
             permissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.RECORD_AUDIO
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.SEND_SMS
                 )
             )
         }
@@ -226,8 +258,8 @@ fun SOSScreen(
         initialValue = 0.75f,
         targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
-            tween(900),
-            RepeatMode.Reverse
+            animation = tween(900),
+            repeatMode = RepeatMode.Reverse
         ),
         label = "r1"
     )
@@ -236,8 +268,8 @@ fun SOSScreen(
         initialValue = 0.65f,
         targetValue = 1.10f,
         animationSpec = infiniteRepeatable(
-            tween(1100),
-            RepeatMode.Reverse
+            animation = tween(1100),
+            repeatMode = RepeatMode.Reverse
         ),
         label = "r2"
     )
@@ -246,8 +278,8 @@ fun SOSScreen(
         initialValue = 0.55f,
         targetValue = 1.15f,
         animationSpec = infiniteRepeatable(
-            tween(1300),
-            RepeatMode.Reverse
+            animation = tween(1300),
+            repeatMode = RepeatMode.Reverse
         ),
         label = "r3"
     )
