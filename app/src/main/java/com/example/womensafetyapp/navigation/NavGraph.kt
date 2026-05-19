@@ -13,7 +13,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
 import com.example.womensafetyapp.ui.screens.*
-import com.example.womensafetyapp.ui.screens.EmergencyContactScreen
 import com.example.womensafetyapp.viewmodel.AuthViewModel
 
 sealed class Screen(val route: String) {

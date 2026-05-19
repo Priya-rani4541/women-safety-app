@@ -134,7 +134,7 @@ fun SOSSentScreen(
                     .clip(RoundedCornerShape(14.dp))
                     .background(Brush.horizontalGradient(listOf(SSPink, Color(0xFFFF6060))))
                     .clickable {
-                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:100"))
+                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
                         context.startActivity(intent)
                     },
                 contentAlignment = Alignment.Center

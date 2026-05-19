@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.widget.Toast
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.core.*
@@ -39,6 +40,9 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.material.icons.filled.Person
 import android.Manifest
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.FlashlightOn
@@ -51,6 +55,11 @@ import com.example.womensafetyapp.utils.LocationUtils
 import com.example.womensafetyapp.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import androidx.compose.runtime.DisposableEffect
+import com.example.womensafetyapp.utils.AudioRecorder
+import com.example.womensafetyapp.utils.ShakeDetector
 
 // ─── Colors ────────────────────────────────────────────────────────────────────
 private val HomeBg         = Color(0xFF0F0820)
@@ -92,6 +101,8 @@ private val quickColors = listOf(
     Color(0xFFFCE4EC) to Color(0xFFE91E63),
 )
 
+
+
 @Composable
 fun HomeScreen(
     onSOSTriggered: () -> Unit = {},
@@ -100,6 +111,13 @@ fun HomeScreen(
     val context     = LocalContext.current
     val activity    = context as? Activity
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    val sensorManager =
+        context.getSystemService(Context.SENSOR_SERVICE)
+                as SensorManager
+
+    val accelerometer =
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
     val auth = FirebaseAuth.getInstance()
     val db   = FirebaseFirestore.getInstance()
@@ -120,6 +138,55 @@ fun HomeScreen(
     )
 
     val locationPermission = Manifest.permission.ACCESS_FINE_LOCATION
+
+    val audioRecorder = remember {
+
+        AudioRecorder(context)
+    }
+
+    var isTracking by remember {
+        mutableStateOf(false)
+    }
+
+    // SHAKE logic
+    DisposableEffect(Unit) {
+
+        val shakeDetector = ShakeDetector {
+
+            // WHAT HAPPENS ON SHAKE
+
+            onSOSTriggered()
+
+            val vibrator =
+                context.getSystemService(Context.VIBRATOR_SERVICE)
+                        as android.os.Vibrator
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+
+                vibrator.vibrate(
+                    android.os.VibrationEffect.createWaveform(
+                        longArrayOf(0, 400, 200, 400),
+                        -1
+                    )
+                )
+
+            } else {
+
+                vibrator.vibrate(1000)
+            }
+        }
+
+        sensorManager.registerListener(
+            shakeDetector,
+            accelerometer,
+            SensorManager.SENSOR_DELAY_UI
+        )
+
+        onDispose {
+
+            sensorManager.unregisterListener(shakeDetector)
+        }
+    }
 
     // ── Fetch user data ────────────────────────────────────────────────────────
     LaunchedEffect(Unit) {
@@ -175,6 +242,32 @@ fun HomeScreen(
             currentTime = SimpleDateFormat("EEEE, hh:mm a", Locale.getDefault())
                 .format(Date()).uppercase()
             delay(60_000L) // update every minute
+        }
+    }
+
+    LaunchedEffect(isTracking) {
+
+        while (isTracking) {
+
+            LocationUtils.getCurrentLocation(context) { lat, lng ->
+
+                val uid =
+                    FirebaseAuth.getInstance().currentUser?.uid
+                        ?: return@getCurrentLocation
+
+                FirebaseFirestore.getInstance()
+                    .collection("live_locations")
+                    .document(uid)
+                    .set(
+                        hashMapOf(
+                            "latitude" to lat,
+                            "longitude" to lng,
+                            "timestamp" to System.currentTimeMillis()
+                        )
+                    )
+            }
+
+            delay(10000)
         }
     }
 
@@ -480,10 +573,23 @@ fun HomeScreen(
                                     .pointerInput(Unit) {
                                         detectTapGestures(
                                             onPress = {
+
                                                 sosPressed = true
-                                                val released = tryAwaitRelease()
+
+                                                val startTime = System.currentTimeMillis()
+
+                                                tryAwaitRelease()
+
+                                                val endTime = System.currentTimeMillis()
+
+                                                val holdDuration = endTime - startTime
+
+                                                if (holdDuration >= 3000) {
+
+                                                    onSOSTriggered()
+                                                }
+
                                                 sosPressed = false
-                                                if (released) onSOSTriggered()
                                             }
                                         )
                                     },
@@ -527,9 +633,74 @@ fun HomeScreen(
                                 .padding(horizontal = 20.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            SOSQuickAction("📞", "Call\nPolice")
-                            SOSQuickAction("📍", "Share\nLocation")
-                            SOSQuickAction("📳", "Alert\nVibrate")
+                            SOSQuickAction(
+                                emoji = "📞",
+                                label = "Call\nPolice"
+                            ) {
+
+                                val intent = Intent(Intent.ACTION_DIAL).apply {
+                                    data = Uri.parse("tel:112")
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+
+                                context.startActivity(intent)
+                            }
+
+                            SOSQuickAction(
+                                emoji = "📍",
+                                label = "Share\nLocation"
+                            ) {
+
+                                val shareIntent = Intent().apply {
+
+                                    action = Intent.ACTION_SEND
+
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        "Emergency! My location:\nhttps://maps.google.com/?q=31.2240,75.7708"
+                                    )
+
+                                    type = "text/plain"
+                                    `package` = "com.whatsapp"
+                                }
+
+                                try {
+
+                                    context.startActivity(shareIntent)
+
+                                } catch (e: Exception) {
+
+                                    Toast.makeText(
+                                        context,
+                                        "WhatsApp not installed",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+
+                            SOSQuickAction(
+                                emoji = "📳",
+                                label = "Alert\nVibrate"
+                            ) {
+
+                                val vibrator =
+                                    context.getSystemService(Context.VIBRATOR_SERVICE)
+                                            as Vibrator
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+                                    vibrator.vibrate(
+                                        VibrationEffect.createWaveform(
+                                            longArrayOf(0, 500, 300, 500),
+                                            -1
+                                        )
+                                    )
+
+                                } else {
+
+                                    vibrator.vibrate(2000)
+                                }
+                            }
                         }
                     }
                 }
@@ -707,40 +878,104 @@ fun HomeScreen(
                                 onClick     = { clickedItem -> // When user presses: Live Track it: gets GPS, uploads location to Firebase
                                     when (clickedItem.label) {
                                         "Safe Route" -> onNavigate(Screen.SafeRoute)
-                                        "Live Track" -> { if (
-                                            ContextCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.ACCESS_FINE_LOCATION
-                                            ) == PackageManager.PERMISSION_GRANTED
-                                        ) {
+                                        "Live Track" -> {
 
-                                            LocationUtils.getCurrentLocation(context) { lat, lng ->
+                                            if (
+                                                ContextCompat.checkSelfPermission(
+                                                    context,
+                                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                                ) == PackageManager.PERMISSION_GRANTED
+                                            ) {
 
-                                                val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@getCurrentLocation
+                                                isTracking = !isTracking
+                                                if (isTracking) {
 
-                                                val locationData = hashMapOf(
-                                                    "latitude" to lat,
-                                                    "longitude" to lng,
-                                                    "timestamp" to System.currentTimeMillis()
-                                                )
+                                                    LocationUtils.getCurrentLocation(context) { lat, lng ->
 
-                                                FirebaseFirestore.getInstance()
-                                                    .collection("live_locations")
-                                                    .document(uid)
-                                                    .set(locationData)
+                                                        val mapsLink =
+                                                            "https://maps.google.com/?q=$lat,$lng"
+
+                                                        val shareIntent = Intent().apply {
+
+                                                            action = Intent.ACTION_SEND
+
+                                                            putExtra(
+                                                                Intent.EXTRA_TEXT,
+
+                                                                """
+                🚨 LIVE TRACKING ENABLED
+                
+                Track my live location:
+                
+                $mapsLink
+                """.trimIndent()
+                                                            )
+
+                                                            type = "text/plain"
+
+                                                            `package` = "com.whatsapp"
+                                                        }
+
+                                                        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                                                        try {
+
+                                                            context.startActivity(shareIntent)
+
+                                                        } catch (e: Exception) {
+
+                                                            Toast.makeText(
+                                                                context,
+                                                                "WhatsApp not installed",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    }
+                                                }
+
+                                                Toast.makeText(
+                                                    context,
+                                                    if (isTracking)
+                                                        "Live tracking started"
+                                                    else
+                                                        "Live tracking stopped",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                                if (isTracking) {
+
+                                                    LocationUtils.getCurrentLocation(context) { lat, lng ->
+
+                                                        val uid =
+                                                            FirebaseAuth.getInstance()
+                                                                .currentUser?.uid
+                                                                ?: return@getCurrentLocation
+
+                                                        val locationData = hashMapOf(
+                                                            "latitude" to lat,
+                                                            "longitude" to lng,
+                                                            "timestamp" to System.currentTimeMillis()
+                                                        )
+
+                                                        FirebaseFirestore.getInstance()
+                                                            .collection("live_locations")
+                                                            .document(uid)
+                                                            .set(locationData)
+                                                    }
+                                                }
+
+                                            } else {
+
+                                                activity?.let {
+
+                                                    ActivityCompat.requestPermissions(
+                                                        it,
+                                                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                                        100
+                                                    )
+                                                }
                                             }
-
-                                        } else {
-
-                                            activity?.let {
-
-                                                ActivityCompat.requestPermissions(
-                                                    it,
-                                                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                                                    100
-                                                )
-                                            }
-                                        } }
+                                        }
                                         "Network"    -> onNavigate(Screen.CrowdNetwork)
                                         "Flashlight" -> {
                                             val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as android.hardware.camera2.CameraManager
@@ -756,7 +991,7 @@ fun HomeScreen(
                                             } catch (e: Exception) { e.printStackTrace() }
                                         }
                                         "Helpline" -> {
-                                            val intent = Intent(Intent.ACTION_CALL).apply {
+                                            val intent = Intent(Intent.ACTION_DIAL).apply {
                                                 data = Uri.parse("tel:112")
                                             }
                                             if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
@@ -767,7 +1002,29 @@ fun HomeScreen(
                                                 }
                                             }
                                         }
-                                        "Record" -> { /* TODO */ }
+                                        "Record" -> {
+
+                                            if (!audioRecorder.isCurrentlyRecording()) {
+
+                                                audioRecorder.startRecording()
+
+                                                Toast.makeText(
+                                                    context,
+                                                    "Emergency recording started",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                            } else {
+
+                                                audioRecorder.stopRecording()
+
+                                                Toast.makeText(
+                                                    context,
+                                                    "Recording saved",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                     }
                                 }
                             )
@@ -819,12 +1076,19 @@ fun HomeScreen(
 
 // ─── SOS quick action button ──────────────────────────────────────────────────
 @Composable
-private fun SOSQuickAction(emoji: String, label: String) {
+private fun SOSQuickAction(
+    emoji: String,
+    label: String,
+    onClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier            = Modifier
             .clip(RoundedCornerShape(12.dp))
             .background(WhiteHome.copy(alpha = 0.06f))
+            .clickable {
+                onClick()
+            }
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Text(emoji, fontSize = 20.sp)
