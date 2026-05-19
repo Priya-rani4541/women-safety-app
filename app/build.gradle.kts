@@ -56,10 +56,8 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended:1.6.2")
 
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-
     // Firebase BOM - manages all versions automatically
-    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
 
     // Firebase libraries - NO versions needed when using BOM
     implementation("com.google.firebase:firebase-auth-ktx")
@@ -68,6 +66,7 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
 
     testImplementation(libs.junit)
 
@@ -87,5 +86,17 @@ dependencies {
 
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+
+    //Locations Tracking
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+
+    //Map trigger
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("org.osmdroid:osmdroid-wms:6.1.18")
+
+    //storage
+    implementation("com.google.firebase:firebase-storage-ktx")
 
 }

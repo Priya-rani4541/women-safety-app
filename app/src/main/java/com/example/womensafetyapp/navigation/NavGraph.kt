@@ -1,5 +1,7 @@
 package com.example.womensafetyapp.navigation
 
+
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.derivedStateOf
@@ -11,22 +13,29 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
 import com.example.womensafetyapp.ui.screens.*
+import com.example.womensafetyapp.ui.screens.EmergencyContactScreen
 import com.example.womensafetyapp.viewmodel.AuthViewModel
 
 sealed class Screen(val route: String) {
 
     object Splash : Screen("splash")
+
     object Login : Screen("login")
+
     object Register : Screen("register")
 
     object Home : Screen("home")
 
     object SOS : Screen("sos")
+
     object SOSSent : Screen("sos_sent")
 
     object EmergencyContacts : Screen("emergency_contacts")
 
     object SafeRoute : Screen("safe_route")
+
+    // NEW MAP SCREEN
+    object Map : Screen("map")
 
     object CrowdNetwork : Screen("crowd_network")
 
@@ -139,8 +148,9 @@ fun SetupNavGraph(
                         Screen.Profile ->
                             navController.navigate(Screen.Profile.route)
 
+                        // OPEN MAP SCREEN
                         Screen.SafeRoute ->
-                            navController.navigate(Screen.SafeRoute.route)
+                            navController.navigate(Screen.Map.route)
 
                         Screen.EmergencyContacts ->
                             navController.navigate(Screen.EmergencyContacts.route)
@@ -198,10 +208,21 @@ fun SetupNavGraph(
             )
         }
 
-        // SAFE ROUTE
+        // SAFE ROUTE SCREEN
         composable(Screen.SafeRoute.route) {
 
             SafeRouteScreen(
+
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // MAP SCREEN
+        composable(Screen.Map.route) {
+
+            MapScreen(
 
                 onBack = {
                     navController.popBackStack()
@@ -224,12 +245,16 @@ fun SetupNavGraph(
         composable(Screen.Profile.route) {
 
             ProfileScreen(
+                onLogout = {
 
+                    navController.navigate(Screen.Login.route) {
+
+                        popUpTo(0)
+                    }
+                },
                 onNavigateToContacts = {
 
-                    navController.navigate(
-                        Screen.EmergencyContacts.route
-                    )
+                    navController.navigate(Screen.EmergencyContacts.route)
                 }
             )
         }
