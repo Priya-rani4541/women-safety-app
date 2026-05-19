@@ -19,6 +19,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.womensafetyapp.utils.LocationUtils
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.time.delay
 
 private val SSBg      = Color(0xFF1A0410)
 private val SSRed     = Color(0xFFD93025)
@@ -32,6 +35,51 @@ private val SSCancel  = Color(0xFF2A1530)
 fun SOSSentScreen(
     onCancelAlert: () -> Unit = {}) {
     val context = LocalContext.current
+    var locationText by remember {
+        mutableStateOf("Fetching live location...")
+    }
+    var seconds by remember {
+        mutableIntStateOf(0)
+    }
+    LaunchedEffect(Unit) {
+
+        try {
+
+            LocationUtils.getCurrentLocation(context) { lat, lng ->
+
+                val geocoder =
+                    android.location.Geocoder(
+                        context,
+                        java.util.Locale.getDefault()
+                    )
+
+                val addresses =
+                    geocoder.getFromLocation(lat, lng, 1)
+
+                if (!addresses.isNullOrEmpty()) {
+
+                    val address = addresses[0]
+
+                    locationText =
+                        "${address.locality}, ${address.adminArea}"
+                }
+            }
+
+        } catch (e: Exception) {
+
+            locationText = "Location unavailable"
+        }
+    }
+
+    LaunchedEffect(Unit) {
+
+        while (true) {
+
+            delay(1000)
+
+            seconds++
+        }
+    }
 
     val infiniteTransition = rememberInfiniteTransition(label = "sosSentPulse")
     val pulse by infiniteTransition.animateFloat(
@@ -86,6 +134,15 @@ fun SOSSentScreen(
             Spacer(Modifier.height(28.dp))
 
             Text("Help Is Coming", color = SSWhite, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "Emergency active for ${seconds}s",
+                color = SSPink,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
             Spacer(Modifier.height(14.dp))
             Text(
                 "Your location and emergency details have\nbeen sent to your guardians and nearby\nsafety network.",
@@ -106,7 +163,12 @@ fun SOSSentScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text("📍  YOUR LOCATION", color = SSGray, fontSize = 10.sp, letterSpacing = 1.5.sp)
                     Spacer(Modifier.height(8.dp))
-                    Text("Connaught Place, New Delhi", color = SSWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        locationText,
+                        color = SSWhite,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(4.dp))
                     Text("28.6315° N, 77.2167° E", color = SSGray, fontSize = 12.sp)
                 }
@@ -160,12 +222,34 @@ fun SOSSentScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            Text("Recording audio · Sharing live location", color = SSGray.copy(alpha = 0.6f), fontSize = 11.sp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                LiveStatusChip("🎤 Recording")
+
+                LiveStatusChip("📡 Live Tracking")
+
+                LiveStatusChip("🚨 Guardians Alerted")
+            }
             Spacer(Modifier.height(32.dp))
         }
     }
 }
-
-@Preview(showBackground = true, backgroundColor = 0xFF1A0410)
 @Composable
-fun SOSSentPreview() { SOSSentScreen() }
+fun LiveStatusChip(text: String) {
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(SSWhite.copy(alpha = 0.08f))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+
+        Text(
+            text = text,
+            color = SSWhite,
+            fontSize = 11.sp
+        )
+    }
+}
