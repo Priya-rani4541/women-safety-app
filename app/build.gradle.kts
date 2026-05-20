@@ -99,4 +99,6 @@ dependencies {
     //storage
     implementation("com.google.firebase:firebase-storage-ktx")
 
+    implementation("com.google.maps.android:maps-compose:4.3.0")
+
 }

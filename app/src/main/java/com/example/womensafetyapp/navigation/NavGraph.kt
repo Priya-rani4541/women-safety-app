@@ -1,7 +1,5 @@
 package com.example.womensafetyapp.navigation
 
-
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.derivedStateOf
@@ -14,6 +12,7 @@ import androidx.navigation.compose.composable
 
 import com.example.womensafetyapp.ui.screens.*
 import com.example.womensafetyapp.ui.screens.EmergencyContactScreen
+import com.example.womensafetyapp.ui.screens.LiveTrackingScreen
 import com.example.womensafetyapp.viewmodel.AuthViewModel
 
 sealed class Screen(val route: String) {
@@ -34,8 +33,12 @@ sealed class Screen(val route: String) {
 
     object SafeRoute : Screen("safe_route")
 
-    // NEW MAP SCREEN
+    // MAP SCREEN
     object Map : Screen("map")
+
+    // LIVE TRACKING SCREEN
+    object LiveTracking :
+        Screen("live_tracking/{userId}")
 
     object CrowdNetwork : Screen("crowd_network")
 
@@ -148,7 +151,6 @@ fun SetupNavGraph(
                         Screen.Profile ->
                             navController.navigate(Screen.Profile.route)
 
-                        // OPEN MAP SCREEN
                         Screen.SafeRoute ->
                             navController.navigate(Screen.Map.route)
 
@@ -208,7 +210,7 @@ fun SetupNavGraph(
             )
         }
 
-        // SAFE ROUTE SCREEN
+        // SAFE ROUTE
         composable(Screen.SafeRoute.route) {
 
             SafeRouteScreen(
@@ -230,6 +232,23 @@ fun SetupNavGraph(
             )
         }
 
+        // LIVE TRACKING SCREEN
+        composable(
+
+            route = "live_tracking/{userId}"
+
+        ) { backStackEntry ->
+
+            val userId =
+                backStackEntry.arguments
+                    ?.getString("userId")
+                    ?: ""
+
+            LiveTrackingScreen(
+                userId = userId
+            )
+        }
+
         // CROWD NETWORK
         composable(Screen.CrowdNetwork.route) {
 
@@ -245,6 +264,7 @@ fun SetupNavGraph(
         composable(Screen.Profile.route) {
 
             ProfileScreen(
+
                 onLogout = {
 
                     navController.navigate(Screen.Login.route) {
@@ -252,9 +272,12 @@ fun SetupNavGraph(
                         popUpTo(0)
                     }
                 },
+
                 onNavigateToContacts = {
 
-                    navController.navigate(Screen.EmergencyContacts.route)
+                    navController.navigate(
+                        Screen.EmergencyContacts.route
+                    )
                 }
             )
         }

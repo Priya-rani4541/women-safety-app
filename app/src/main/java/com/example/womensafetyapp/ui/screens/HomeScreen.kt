@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import kotlinx.coroutines.delay
 import androidx.compose.material.icons.filled.Home
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -51,6 +50,8 @@ import com.example.womensafetyapp.utils.LocationUtils
 import com.example.womensafetyapp.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 // ─── Colors ────────────────────────────────────────────────────────────────────
 private val HomeBg         = Color(0xFF0F0820)
@@ -110,6 +111,10 @@ fun HomeScreen(
     var isFlashOn      by remember { mutableStateOf(false) }
     var sosPressed     by remember { mutableStateOf(false) }
 
+    var locationText by remember {
+        mutableStateOf("Fetching location...")
+    }
+
     val quickItems = listOf(
         QuickItem(Icons.Default.Map,             "Safe Route"),
         QuickItem(Icons.Default.LocationOn,      "Live Track"),
@@ -120,14 +125,75 @@ fun HomeScreen(
     )
 
     val locationPermission = Manifest.permission.ACCESS_FINE_LOCATION
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+
+            if (isGranted) {
+
+                LocationUtils.getCurrentLocation(context) { lat, lng ->
+
+                    try {
+
+                        val geocoder =
+                            android.location.Geocoder(
+                                context,
+                                Locale.getDefault()
+                            )
+
+                        val addresses =
+                            geocoder.getFromLocation(lat, lng, 1)
+
+                        if (!addresses.isNullOrEmpty()) {
+
+                            val address = addresses[0]
+
+                            locationText = buildString {
+
+                                address.subLocality?.let {
+                                    append("$it, ")
+                                }
+
+                                address.locality?.let {
+                                    append("$it, ")
+                                }
+
+                                address.adminArea?.let {
+                                    append(it)
+                                }
+                            }.trimEnd(',', ' ')
+                        }
+
+                    } catch (e: Exception) {
+
+                        locationText = "$lat, $lng"
+                    }
+                }
+
+            } else {
+
+                locationText =
+                    "Location permission denied"
+            }
+        }
 
     // ── Fetch user data ────────────────────────────────────────────────────────
-    LaunchedEffect(Unit) {
+    LaunchedEffect(locationText) {
         val uid = auth.currentUser?.uid ?: return@LaunchedEffect
         db.collection("users").document(uid).get()
             .addOnSuccessListener { doc -> userName = doc.getString("name") ?: "User" }
-        db.collection("users").document(uid).collection("contacts").get()
-            .addOnSuccessListener { result -> guardianCount = result.size() }
+        db.collection("emergency_contacts")
+            .whereEqualTo("userId", uid)
+            .get()
+            .addOnSuccessListener { result ->
+
+                guardianCount = result.size()
+            }
+            .addOnFailureListener {
+
+                guardianCount = 0
+            }
     }
 
     // ── Animations ─────────────────────────────────────────────────────────────
@@ -170,11 +236,61 @@ fun HomeScreen(
         )
     }
 
+
+
     LaunchedEffect(Unit) {
-        while (true) {
-            currentTime = SimpleDateFormat("EEEE, hh:mm a", Locale.getDefault())
-                .format(Date()).uppercase()
-            delay(60_000L) // update every minute
+
+        if (
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+
+            LocationUtils.getCurrentLocation(context) { lat, lng ->
+
+                try {
+
+                    val geocoder =
+                        android.location.Geocoder(
+                            context,
+                            Locale.getDefault()
+                        )
+
+                    val addresses =
+                        geocoder.getFromLocation(lat, lng, 1)
+
+                    if (!addresses.isNullOrEmpty()) {
+
+                        val address = addresses[0]
+
+                        locationText = buildString {
+
+                            address.subLocality?.let {
+                                append("$it, ")
+                            }
+
+                            address.locality?.let {
+                                append("$it, ")
+                            }
+
+                            address.adminArea?.let {
+                                append(it)
+                            }
+                        }.trimEnd(',', ' ')
+                    }
+
+                } catch (e: Exception) {
+
+                    locationText = "$lat, $lng"
+                }
+            }
+
+        } else {
+
+            permissionLauncher.launch(
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
         }
     }
 
@@ -538,40 +654,9 @@ fun HomeScreen(
             Spacer(Modifier.height(24.dp))
 
             // ── Location Card ──────────────────────────────────────────────────────────
-            var locationText by remember { mutableStateOf("Fetching location...") }
 
-            LaunchedEffect(Unit) {
-                try {
-                    val geocoder = android.location.Geocoder(context, Locale.getDefault())
-                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE)
-                            as android.location.LocationManager
-                    if (ContextCompat.checkSelfPermission(
-                            context, Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        val location = locationManager.getLastKnownLocation(
-                            android.location.LocationManager.GPS_PROVIDER
-                        ) ?: locationManager.getLastKnownLocation(
-                            android.location.LocationManager.NETWORK_PROVIDER
-                        )
-                        location?.let {
-                            val addresses = geocoder.getFromLocation(it.latitude, it.longitude, 1)
-                            if (!addresses.isNullOrEmpty()) {
-                                val addr = addresses[0]
-                                locationText = buildString {
-                                    addr.subLocality?.let  { append("$it, ") }
-                                    addr.locality?.let     { append("$it, ") }
-                                    addr.adminArea?.let    { append(it) }
-                                }.trimEnd(',', ' ')
-                            }
-                        }
-                    } else {
-                        locationText = "Location permission needed"
-                    }
-                } catch (e: Exception) {
-                    locationText = "Unable to fetch location"
-                }
-            }
+
+
 
             Box(
                 modifier = Modifier

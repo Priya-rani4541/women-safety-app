@@ -2,7 +2,9 @@ package com.example.womensafetyapp.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.google.android.gms.location.LocationServices
+import android.location.Location
+import android.widget.Toast
+import com.google.android.gms.location.*
 
 object LocationUtils {
 
@@ -18,16 +20,26 @@ object LocationUtils {
         val fusedLocationClient =
             LocationServices.getFusedLocationProviderClient(context)
 
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location ->
+        fusedLocationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            null
+        ).addOnSuccessListener { location: Location? ->
 
-                if (location != null) {
+            location?.let {
 
-                    onLocationReceived(
-                        location.latitude,
-                        location.longitude
-                    )
-                }
+                onLocationReceived(
+                    it.latitude,
+                    it.longitude
+                )
+
+            } ?: run {
+
+                Toast.makeText(
+                    context,
+                    "Turn on GPS",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+        }
     }
 }
