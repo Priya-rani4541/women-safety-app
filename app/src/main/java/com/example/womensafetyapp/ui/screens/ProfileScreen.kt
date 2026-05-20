@@ -303,14 +303,30 @@ fun ProfileScreen(
 
                     // Stats row
                     Row(
-                        modifier              = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        ProfileStat("${profile.guardianCount}", "Guardians", cardColor, textColor, subColor)
-                        VerticalDivider(modifier = Modifier.height(40.dp), color = PBorder)
-                        ProfileStat("Active", "Shield", cardColor, textColor, subColor)
-                        VerticalDivider(modifier = Modifier.height(40.dp), color = PBorder)
-                        ProfileStat("PRO", "Plan", cardColor, textColor, subColor)
+
+                        ProfileStat(
+                            "${profile.guardianCount}",
+                            "Guardians",
+                            cardColor,
+                            textColor,
+                            subColor
+                        )
+
+                        VerticalDivider(
+                            modifier = Modifier.height(40.dp),
+                            color = PBorder
+                        )
+
+                        ProfileStat(
+                            "Active",
+                            "Shield",
+                            cardColor,
+                            textColor,
+                            subColor
+                        )
                     }
                 }
             }
@@ -396,7 +412,14 @@ fun ProfileScreen(
             ActivityRow("📍", "Live tracking enabled",   "2 days ago", PSafe,   textColor, subColor)
             ActivityRow("👥", "Guardian added",          "3 days ago", PPurple, textColor, subColor)
             ActivityRow("🔐", "Account verified",        "Last week",  PSafe,   textColor, subColor)
-            ActivityRow("🛡️", "Shield Pro activated",   "Last week",  PWarn,   textColor, subColor)
+            ActivityRow(
+                "📳",
+                "Shake detection configured",
+                "Last week",
+                PPurple,
+                textColor,
+                subColor
+            )
         }
 
         Spacer(Modifier.height(14.dp))

@@ -15,4 +15,6 @@
     <string name="title_activity_gaurdian">Gaurdian</string>
     <string name="title_activity_location_utils">LocationUtils</string>
     <string name="title_activity_sosmanager">SOSManager</string>
+    <string name="title_activity_shake_detector.kt">ShakeDetector.kt</string>
+    <string name="title_activity_audio_recorder">AudioRecorder</string>
 </resources>

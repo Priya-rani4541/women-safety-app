@@ -150,12 +150,11 @@ fun SheShieldSplashScreen(onFinished: () -> Unit = {}) {
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text          = "YOUR SAFETY, OUR PRIORITY",
-                color         = WhiteText.copy(alpha = 0.55f),
-                fontSize      = 11.sp,
-                letterSpacing = 3.sp,
-                fontWeight    = FontWeight.Medium,
-                textAlign     = TextAlign.Center
+                    text = "आपकी सुरक्षा, हमारी ज़िम्मेदारी",
+                    color = WhiteText.copy(alpha = 0.75f),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.weight(1f))
