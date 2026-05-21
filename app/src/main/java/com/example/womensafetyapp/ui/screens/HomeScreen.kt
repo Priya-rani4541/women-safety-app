@@ -61,6 +61,7 @@ import com.example.womensafetyapp.utils.AudioRecorder
 import com.example.womensafetyapp.utils.ShakeDetector
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.delay
 
 // ─── Colors ────────────────────────────────────────────────────────────────────
 private val HomeBg         = Color(0xFF0F0820)

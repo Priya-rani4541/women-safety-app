@@ -32,6 +32,11 @@ class AudioRecorder(
                 "sos_recording.mp4"
             )
 
+            audioFile = File(
+                context.getExternalFilesDir(null),
+                "sos_recording.m4a"
+            )
+
             recorder =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     MediaRecorder(context)

@@ -9,12 +9,8 @@
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
@@ -30,29 +26,21 @@
         android:label="Women Safety"
         android:supportsRtl="true"
         android:theme="@style/Theme.WomenSafetyApp">
-        <activity
-            android:name=".utils.AudioRecorder"
-            android:exported="false"
-            android:label="@string/title_activity_audio_recorder"
-            android:theme="@style/Theme.WomenSafetyApp" />
-        <activity
-            android:name=".utils.ShakeDetector.kt"
-            android:exported="false"
-            android:label="@string/title_activity_shake_detector.kt"
-            android:theme="@style/Theme.WomenSafetyApp" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBS4YKS6lA2U2vFqx45n4DJj9WPgxEg9gc" />
+
 
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+                android:resource="@xml/file_paths"/>
         </provider>
 
         <activity
